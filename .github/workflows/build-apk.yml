@@ -2,9 +2,10 @@ name: Build Android APK
 
 on:
   push:
-    branches: [ main, master ]
-  release:
-    types: [published]
+    branches: [ main, master, principal ]
+  pull_request:
+    branches: [ main, master, principal ]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -18,42 +19,86 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '18'
-        cache: 'npm'
+        # Pas de cache npm car pas de dépendances à installer
         
-    - name: Install dependencies
+    - name: Install Capacitor CLI globally
+      run: npm install -g @capacitor/cli
+        
+    - name: Create www directory and copy files
       run: |
-        npm install
-        npm install -g @capacitor/cli
+        mkdir -p www
+        cp index.html www/
+        echo "✅ Fichiers web copiés dans www/"
         
-    - name: Build web assets
-      run: npm run build
+    - name: Install Capacitor dependencies
+      run: |
+        npm install --save-dev @capacitor/cli
+        npm install @capacitor/core @capacitor/android
+        echo "✅ Dépendances Capacitor installées"
       
-    - name: Setup Java
+    - name: Setup Java JDK
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
         java-version: '17'
         
-    - name: Initialize Capacitor Android
+    - name: Initialize Capacitor configuration
       run: |
-        npx cap add android
-        npx cap sync
+        if [ ! -f "capacitor.config.json" ]; then
+          echo "📝 Création de capacitor.config.json"
+          cat > capacitor.config.json << 'EOF'
+        {
+          "appId": "com.pegazus16.codetetrispro",
+          "appName": "Code Tetris Pro",
+          "webDir": "www",
+          "bundledWebRuntime": false,
+          "android": {
+            "buildOptions": {
+              "keystorePath": "",
+              "keystoreAlias": ""
+            }
+          }
+        }
+        EOF
+        fi
+        
+    - name: Add Android platform
+      run: |
+        npx cap add android || echo "Platform already exists"
+        npx cap sync android
+        echo "✅ Plateforme Android synchronisée"
+        
+    - name: Make gradlew executable
+      run: |
+        cd android
+        chmod +x ./gradlew
         
     - name: Build Android APK (Debug)
       run: |
         cd android
-        chmod +x ./gradlew
-        ./gradlew assembleDebug
+        ./gradlew assembleDebug --no-daemon --stacktrace
+        echo "✅ APK Debug compilé avec succès"
+        
+    - name: Rename APK with version
+      run: |
+        VERSION=$(date +"%Y%m%d-%H%M")
+        cp android/app/build/outputs/apk/debug/app-debug.apk \
+           code-tetris-pro-v${VERSION}.apk
+        echo "APK_VERSION=${VERSION}" >> $GITHUB_ENV
         
     - name: Upload APK artifact
       uses: actions/upload-artifact@v4
       with:
         name: code-tetris-pro-apk
-        path: android/app/build/outputs/apk/debug/app-debug.apk
+        path: code-tetris-pro-v${{ env.APK_VERSION }}.apk
         retention-days: 30
+        if-no-files-found: error
         
-    - name: Create APK download info
+    - name: Build summary
       run: |
-        echo "📱 APK généré avec succès!"
-        echo "📥 Téléchargez l'APK depuis l'onglet Artifacts"
-        echo "🕒 Généré le: $(date)"
+        echo "## 🎮 Build réussi ! 🚀" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "📱 **APK généré:** code-tetris-pro-v${{ env.APK_VERSION }}.apk" >> $GITHUB_STEP_SUMMARY
+        echo "📥 **Téléchargement:** Onglet Actions → Artifacts" >> $GITHUB_STEP_SUMMARY
+        echo "🕒 **Date:** $(date '+%Y-%m-%d %H:%M:%S')" >> $GITHUB_STEP_SUMMARY
+        echo "✨ **Version:** 4.4.0" >> $GITHUB_STEP_SUMMARY
