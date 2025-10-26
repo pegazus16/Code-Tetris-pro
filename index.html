@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>Code Tetris Pro v4.4 – Effets & Transitions</title>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#00ffff">
+<meta name="description" content="Code Tetris Pro - Jeu éducatif de frappe de code">
+<style>
+/* ========== Reset & Base ========== */
+*{box-sizing:border-box;user-select:none}
+html,body{height:100%;margin:0}
+body{
+  margin:0;padding:0;overflow:hidden;
+  font-family:'Fira Code',monospace;
+  background:linear-gradient(135deg,#0f172a,#1e293b,#0f172a);
+  color:#fff;display:flex;flex-direction:column;align-items:center;
+  height:100vh;width:100vw;justify-content:center;text-align:center;
+}
+
+/* ========== Menu & UI ========== */
+#menu{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;background:rgba(15,23,42,.95);
+  z-index:60;padding:5vh 2vw;
+}
+#menu h1{font-size:6vw;color:#0ff;text-shadow:0 0 25px #0ff;margin-bottom:2vh}
+select,button{font-size:4vw;padding:1vh 2vw;margin:.8vh;border-radius:1vw;border:none;
+ background:rgba(0,255,255,.15);color:#0ff}
+button:hover{background:rgba(0,255,255,.25)}
+
+#audioPanel{display:flex;align-items:center;justify-content:center;gap:2vw;
+ position:absolute;top:1vh;right:2vw;z-index:65}
+#audioToggle{font-size:5vw;background:none;border:none;color:#0ff;text-shadow:0 0 10px #0ff}
+#volumeRange{width:20vw;max-width:120px}
+
+/* ========== Game area ========== */
+#game{
+  position:relative;flex:1;width:95vw;max-width:720px;border:2px solid #0ff;border-radius:10px;
+  overflow:hidden;margin-top:1vh;background:rgba(0,0,0,.16);z-index:1;
+  min-height:48vh;
+}
+#info{display:flex;justify-content:center;gap:5vw;flex-wrap:wrap;margin-top:1vh;font-size:3.6vw;z-index:2}
+#input{width:90vw;max-width:600px;padding:1.5vh 2vw;font-size:4vw;border:2px solid #0ff;border-radius:1vw;
+ background:rgba(0,255,255,.06);color:#fff;margin:1.5vh 0;z-index:2}
+
+/* ========== Words ========== */
+.word{
+  position:absolute;font-size:3.5vw;padding:.8vh 1.5vw;border-radius:.8vw;
+  background:rgba(0,255,255,.08);border:1px solid rgba(0,255,255,.28);
+  box-shadow:0 0 10px rgba(0,255,255,.18);transition:transform .18s ease,opacity .18s ease;
+  white-space:nowrap;
+}
+.glow{animation:glowAnim .28s ease-out}
+@keyframes glowAnim{0%,100%{transform:scale(1)}50%{transform:scale(1.12);box-shadow:0 0 14px currentColor}}
+.word.fade-out{animation:fadeRemove .42s ease-out forwards}
+@keyframes fadeRemove{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.45);filter:blur(3px)}}
+
+/* ========== Particles ========== */
+.particles {
+  position:absolute; left:0; top:0; width:100%; height:100%; pointer-events:none; z-index:5;
+}
+.particle {
+  position:absolute; width:8px; height:8px; border-radius:50%;
+  background:rgba(0,255,255,.9); transform:translate(-50%,-50%) scale(1);
+  opacity:1; will-change: transform, opacity;
+  box-shadow:0 0 6px rgba(0,255,255,.9);
+  transition:transform .9s cubic-bezier(.2,.9,.2,1), opacity .9s linear;
+}
+
+/* colors for languages */
+.lang-cpp { --lang-color: #7dd3fc; }   /* cyan */
+.lang-python { --lang-color: #a78bfa; }/* purple */
+.lang-js { --lang-color: #ffd166; }   /* yellow */
+
+/* ========== Overlays (GameOver / Victory / LevelUp) ========== */
+.overlay {
+  position:fixed;inset:0;background:rgba(0,0,0,.7);
+  backdrop-filter: blur(8px); display:none; align-items:center; justify-content:center;
+  z-index:80;
+}
+.overlay .box {
+  background:rgba(12,22,34,.95); border:2px solid rgba(15,200,255,.12);
+  color:#0ff;padding:3vh 5vw;border-radius:14px; text-align:center; max-width:92vw;
+  box-shadow:0 0 30px rgba(0,255,255,.06);
+}
+.overlay h2{font-size:6vw;margin:0 0 1vh}
+.stat{font-size:4vw;margin:.5vh 0}
+.gm-btn{font-size:4vw;padding:1vh 3vw;margin-top:1vh;border:none;border-radius:1vw;
+ background:#0ff;color:#111;font-weight:bold}
+.gm-btn:hover{background:#7efeff}
+
+/* level-up panel occupies same overlay but different style */
+#levelUpOverlay .box { background:linear-gradient(135deg, rgba(0,200,255,0.12), rgba(120,255,200,0.08)); color:#fff; border-color:#00f5ff; transform:scale(.95); animation:popIn .45s ease-out forwards; }
+@keyframes popIn { 0%{transform:scale(.85); opacity:0} 100%{transform:scale(1); opacity:1} }
+
+/* responsive tweaks */
+@media (min-width:900px){
+  #menu h1{font-size:40px}
+  .overlay h2{font-size:32px}
+  .stat{font-size:18px}
+}
+</style>
+</head>
+<body>
+
+<!-- MENU -->
+<div id="menu">
+  <h1>Code Tetris Pro 🎮</h1>
+  <label>Difficulty:</label>
+  <select id="difficulty">
+    <option value="beginner">Beginner</option>
+    <option value="easy">Easy</option>
+    <option value="medium" selected>Medium</option>
+    <option value="hard">Hard</option>
+    <option value="expert">Expert</option>
+  </select>
+  <label>Language:</label>
+  <select id="language">
+    <option value="cpp" selected>C++</option>
+    <option value="python">Python</option>
+    <option value="javascript">JavaScript</option>
+  </select>
+  <label>Project:</label>
+  <select id="project">
+    <option value="basic" selected>Basic Syntax</option>
+    <option value="calculator">Calculator</option>
+    <option value="fibonacci">Fibonacci</option>
+  </select>
+  <button id="startBtn">🚀 Start Game</button>
+</div>
+
+<!-- audio controls -->
+<div id="audioPanel">
+  <button id="audioToggle">🔊</button>
+  <input id="volumeRange" type="range" min="0" max="1" step="0.05">
+</div>
+
+<!-- game + particles -->
+<div id="game" class="lang-cpp">
+  <div class="particles" id="particles"></div>
+</div>
+
+<!-- info + input -->
+<div id="info">
+  <div>Score: <span id="score">0</span></div>
+  <div>Lives: <span id="lives">3</span></div>
+  <div>Level: <span id="level">1</span></div>
+  <div>Combo: <span id="combo">0</span></div>
+</div>
+<input id="input" type="text" placeholder="Type here..." autofocus>
+
+<!-- overlays -->
+<div id="gameOverScreen" class="overlay" aria-hidden="true">
+  <div class="box">
+    <h2>💀 Game Over 💀</h2>
+    <div class="stat" id="finalScore"></div>
+    <div class="stat" id="finalLevel"></div>
+    <div class="stat" id="finalCombo"></div>
+    <div class="stat" id="finalAccuracy"></div>
+    <button class="gm-btn" id="retryBtn">🔁 Rejouer</button>
+    <button class="gm-btn" id="quitBtn">🏠 Menu</button>
+  </div>
+</div>
+
+<div id="victoryScreen" class="overlay" aria-hidden="true">
+  <div class="box">
+    <h2>🏆 Victoire ! 🏆</h2>
+    <div class="stat" id="victoryScore"></div>
+    <div class="stat" id="victoryCombo"></div>
+    <div class="stat" id="victoryAccuracy"></div>
+    <p style="margin-top:1vh;font-size:3.8vw">✨ Félicitations ! Prochain niveau débloqué. ✨</p>
+    <button class="gm-btn" id="nextLevelBtn">▶️ Continuer</button>
+    <button class="gm-btn" id="mainMenuBtn">🏠 Menu</button>
+  </div>
+</div>
+
+<!-- level up transient overlay -->
+<div id="levelUpOverlay" class="overlay" aria-hidden="true">
+  <div class="box"><h2>⬆️ Level Up!</h2><p class="stat">Prépare-toi — la vitesse augmente...</p></div>
+</div>
+
+<script>
+/* ================= AudioManager (throttle for fast sounds) ================= */
+const AudioManager = {
+  sounds: {},
+  muted: false,
+  volume: parseFloat(localStorage.getItem("volume") || "0.5"),
+  lastPlayed: {},
+  minInterval: { type: 45, error: 80, success: 120, combo: 300, fail: 400, level: 500 },
+  init() {
+    const files = {
+      type: "https://assets.mixkit.co/sfx/preview/mixkit-quick-positive-alert-955.mp3",
+      error: "https://assets.mixkit.co/sfx/preview/mixkit-negative-tone-interface-tap-2569.mp3",
+      success: "https://assets.mixkit.co/sfx/preview/mixkit-game-level-completed-2059.mp3",
+      combo: "https://assets.mixkit.co/sfx/preview/mixkit-game-magic-coin-collect-1939.mp3",
+      fail: "https://assets.mixkit.co/sfx/preview/mixkit-player-losing-or-failing-2042.mp3",
+      level: "https://assets.mixkit.co/sfx/preview/mixkit-melodic-win-sound-2019.mp3"
+    };
+    for (const [k, url] of Object.entries(files)) {
+      const a = new Audio(url);
+      a.volume = this.volume;
+      this.sounds[k] = a;
+      this.lastPlayed[k] = 0;
+    }
+  },
+  play(name) {
+    if (this.muted) return;
+    const now = Date.now();
+    const last = this.lastPlayed[name] || 0;
+    const min = this.minInterval[name] || 60;
+    if (now - last < min) return; // throttle
+    const s = this.sounds[name];
+    if (!s) return;
+    s.currentTime = 0;
+    s.volume = this.volume;
+    s.play().catch(()=>{});
+    this.lastPlayed[name] = now;
+  },
+  setVolume(v) {
+    this.volume = v;
+    localStorage.setItem("volume", v);
+    for (const a of Object.values(this.sounds)) a.volume = v;
+  }
+};
+AudioManager.init();
+
+/* ================= Variables ================= */
+const game = document.getElementById("game");
+const particlesContainer = document.getElementById("particles");
+const input = document.getElementById("input");
+const scoreEl = document.getElementById("score");
+const livesEl = document.getElementById("lives");
+const levelEl = document.getElementById("level");
+const comboEl = document.getElementById("combo");
+const menu = document.getElementById("menu");
+const gameOverScreen = document.getElementById("gameOverScreen");
+const victoryScreen = document.getElementById("victoryScreen");
+const levelUpOverlay = document.getElementById("levelUpOverlay");
+
+let score = 0, lives = 3, level = 1, combo = 0, fallSpeed = 1, spawnInterval = 2000;
+let gameRunning = false, activeWords = [], wordQueue = [];
+let totalTyped = 0, correctTyped = 0, maxCombo = 0;
+let currentProject = 'cpp', currentProjectType = 'basic';
+let spawnTimeout = null, gameLoopId = null;
+
+/* ========== Projects (example) ========== */
+const projects = {
+  cpp: {
+    basic:[["int","main()","{"],["cout","<<","'Hello';"],["return","0;"],["}"]],
+    calculator:[["int","a","=","5;"],["int","b","=","3;"],["int","result","=","a","+","b;"],["cout","<<","result;"]],
+    fibonacci:[["int","n1","=","0;"],["int","n2","=","1;"],["for(int","i","=","0;","i","<","10;","i++)"],["int","next","=","n1","+","n2;"],["n1","=","n2;"],["n2","=","next;"]]
+  },
+  python: {
+    basic:[["def","main():",""],["print('Hello')",""],["main()",""]],
+    calculator:[["a","=","5",""],["b","=","3",""],["result","=","a","+","b",""],["print(result)",""]],
+    fibonacci:[["n1","=","0",""],["n2","=","1",""],["for","i","in","range(10):",""],["next","=","n1","+","n2",""],["n1","=","n2",""],["n2","=","next",""]]
+  },
+  javascript: {
+    basic:[["function","main()","{"],["console.log('Hello');"],["}"]],
+    calculator:[["let","a","=","5;"],["let","b","=","3;"],["let","result","=","a","+","b;"],["console.log(result);"]],
+    fibonacci:[["let","n1","=","0;"],["let","n2","=","1;"],["for(let","i","=","0;","i","<","10;","i++)"],["let","next","=","n1","+","n2;"],["n1","=","n2;"],["n2","=","next;"]]
+  }
+};
+
+const syntaxTypes = {
+  keywords: ["int","return","def","print","function","console.log","cout","let","for","if","else","while"],
+  operators: ["<<","=","==","+","-","*","/","++","--","+=","-="]
+};
+
+/* ================= Word class ================= */
+class Word {
+  constructor(text) {
+    this.text = text;
+    this.remaining = text;
+    this.el = document.createElement("div");
+    this.el.className = 'word';
+    // language color class on game container helps particles color
+    if (syntaxTypes.keywords.includes(text)) this.el.style.color = "#ff6b9d";
+    else if (syntaxTypes.operators.includes(text)) this.el.style.color = "#6bcf7f";
+    else this.el.style.color = "#0ff";
+    this.el.innerText = text;
+    game.appendChild(this.el);
+
+    // position after DOM appended to get width
+    const maxX = Math.max(10, game.offsetWidth - this.el.offsetWidth - 30);
+    this.x = Math.random() * maxX + 15;
+    this.y = -48;
+    this.speed = fallSpeed;
+    this.el.style.left = this.x + 'px';
+    this.el.style.top = this.y + 'px';
+  }
+
+  update() {
+    if (!gameRunning) return;
+    this.y += this.speed;
+    this.el.style.top = this.y + 'px';
+    // bottom collision
+    if (this.y > game.offsetHeight - 24) {
+      lives--;
+      livesEl.innerText = lives;
+      combo = 0;
+      comboEl.innerText = combo;
+      AudioManager.play('fail');
+      this.remove();
+      const idx = activeWords.indexOf(this);
+      if (idx > -1) activeWords.splice(idx,1);
+      if (lives <= 0) gameOver();
+    }
+  }
+
+  typeLetter(letter) {
+    totalTyped++;
+    if (this.remaining.startsWith(letter)) {
+      this.remaining = this.remaining.slice(1);
+      this.el.innerText = this.remaining;
+      this.el.classList.add('glow');
+      setTimeout(()=> this.el.classList.remove('glow'), 200);
+      correctTyped++;
+      AudioManager.play('type');
+
+      if (this.remaining.length === 0) {
+        score += 10 + combo * 2;
+        scoreEl.innerText = score;
+        combo++;
+        if (combo > maxCombo) maxCombo = combo;
+        comboEl.innerText = combo;
+        AudioManager.play('success');
+        if (combo % 5 === 0) AudioManager.play('combo');
+
+        // spawn particles at word center
+        const rect = this.el.getBoundingClientRect();
+        const gameRect = game.getBoundingClientRect();
+        const px = rect.left + rect.width/2 - gameRect.left;
+        const py = rect.top + rect.height/2 - gameRect.top;
+        spawnParticles(px, py);
+
+        // remove
+        this.remove();
+        const idx = activeWords.indexOf(this);
+        if (idx > -1) activeWords.splice(idx,1);
+        return true;
+      }
+    } else {
+      combo = 0;
+      comboEl.innerText = combo;
+      AudioManager.play('error');
+    }
+    return false;
+  }
+
+  remove() {
+    if (!this.el) return;
+    this.el.classList.add('fade-out');
+    setTimeout(()=> {
+      if (this.el && this.el.parentNode) this.el.remove();
+    }, 420);
+  }
+}
+
+/* ================= Game control functions ================= */
+function clearGame() {
+  // cancel spawn timeout
+  if (spawnTimeout) {
+    clearTimeout(spawnTimeout);
+    spawnTimeout = null;
+  }
+  // cancel animation frame
+  if (gameLoopId) {
+    cancelAnimationFrame(gameLoopId);
+    gameLoopId = null;
+  }
+  // remove all word elements
+  activeWords.forEach(w => { try { w.el.remove(); } catch(e){} });
+  activeWords = [];
+  wordQueue = [];
+  // clear particles
+  particlesContainer.innerHTML = '';
+}
+
+function startGame() {
+  clearGame();
+  menu.style.display = 'none';
+  victoryScreen.style.display = 'none';
+  gameOverScreen.style.display = 'none';
+  levelUpOverlay.style.display = 'none';
+  input.focus();
+
+  // reset stats & ui
+  score = 0; lives = 3; level = 1; combo = 0;
+  totalTyped = 0; correctTyped = 0; maxCombo = 0;
+  scoreEl.innerText = score; livesEl.innerText = lives;
+  levelEl.innerText = level; comboEl.innerText = combo;
+
+  gameRunning = true;
+  currentProject = document.getElementById('language').value;
+  currentProjectType = document.getElementById('project').value;
+
+  if (projects[currentProject] && projects[currentProject][currentProjectType]) {
+    wordQueue = [...projects[currentProject][currentProjectType].flat()];
+  } else {
+    wordQueue = [...projects.cpp.basic.flat()];
+  }
+
+  // set language class on game for particle colors
+  setLanguageClass(currentProject);
+
+  const diff = document.getElementById('difficulty').value;
+  fallSpeed = { beginner: .7, easy: 1, medium: 1.3, hard: 1.6, expert: 2 }[diff] || 1;
+  spawnInterval = 2000;
+
+  gameLoop();
+  spawnWord();
+}
+
+function setLanguageClass(lang) {
+  game.classList.remove('lang-cpp','lang-python','lang-js');
+  if (lang === 'cpp') game.classList.add('lang-cpp');
+  else if (lang === 'python') game.classList.add('lang-python');
+  else game.classList.add('lang-js');
+}
+
+function spawnWord() {
+  if (!gameRunning) return;
+  if (wordQueue.length > 0) {
+    const w = new Word(wordQueue.shift());
+    activeWords.push(w);
+  }
+  // increase spawn speed gradually
+  spawnInterval = Math.max(450, spawnInterval * 0.98);
+  spawnTimeout = setTimeout(spawnWord, spawnInterval);
+}
+
+function gameLoop() {
+  if (!gameRunning) return;
+  for (let i = activeWords.length - 1; i >= 0; i--) {
+    activeWords[i].update();
+  }
+  if (wordQueue.length === 0 && activeWords.length === 0) {
+    showVictory();
+    return;
+  }
+  gameLoopId = requestAnimationFrame(gameLoop);
+}
+
+/* ================= Particles ================= */
+function spawnParticles(x, y, count = 10) {
+  // color depending on language class on game
+  let color = 'rgba(0,255,255,0.95)';
+  if (game.classList.contains('lang-python')) color = 'rgba(167,139,250,0.95)'; // purple
+  else if (game.classList.contains('lang-js')) color = 'rgba(255,209,102,0.95)'; // yellow
+  else color = 'rgba(125,211,252,0.95)'; // cyan
+
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.background = color;
+    particlesContainer.appendChild(p);
+    // starting position
+    p.style.left = x + 'px';
+    p.style.top = y + 'px';
+    // random vector
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 18 + Math.random() * 36;
+    const dx = Math.cos(angle) * dist;
+    const dy = Math.sin(angle) * dist - (8 + Math.random()*12); // bias upward
+    // animate by setting transform after small delay (to allow initial style)
+    requestAnimationFrame(()=>{
+      p.style.transform = `translate(${dx}px, ${dy}px) scale(${0.6 + Math.random()*0.8})`;
+      p.style.opacity = '0';
+    });
+    // cleanup after animation
+    setTimeout(()=> { try { p.remove(); } catch(e){} }, 920);
+  }
+}
+
+/* ================= Victory / Level Up / Game Over ================= */
+function showVictory() {
+  gameRunning = false;
+  AudioManager.play('level');
+  const accuracy = totalTyped ? ((correctTyped / totalTyped) * 100).toFixed(1) : 0;
+  document.getElementById('victoryScore').innerText = `🏆 Score : ${score}`;
+  document.getElementById('victoryCombo').innerText = `⚡ Combo max : ${maxCombo}`;
+  document.getElementById('victoryAccuracy').innerText = `🎯 Précision : ${accuracy}%`;
+  setTimeout(()=> { victoryScreen.style.display = 'flex'; }, 520);
+}
+
+function levelTransitionThenNext() {
+  // show level-up overlay for a short time then continue
+  levelUpOverlay.style.display = 'flex';
+  setTimeout(()=> {
+    levelUpOverlay.style.display = 'none';
+    // continue: refill queue and start loop
+    gameRunning = true;
+    gameLoop();
+    spawnWord();
+  }, 900); // duration of level-up visible
+}
+
+function nextLevel() {
+  // hide victory, increase level and display transition
+  victoryScreen.style.display = 'none';
+  level++;
+  levelEl.innerText = level;
+  // increase difficulty
+  fallSpeed *= 1.08;
+  spawnInterval = Math.max(400, spawnInterval * 0.93);
+  // refill queue with same project
+  if (projects[currentProject] && projects[currentProject][currentProjectType]) {
+    wordQueue = [...projects[currentProject][currentProjectType].flat()];
+  }
+  // reset level-specific stats
+  totalTyped = 0; correctTyped = 0; maxCombo = 0; combo = 0; comboEl.innerText = combo;
+  // level transition animation then resume
+  levelTransitionThenNext();
+  AudioManager.play('level');
+}
+
+function gameOver() {
+  gameRunning = false;
+  AudioManager.play('fail');
+  const accuracy = totalTyped ? ((correctTyped / totalTyped) * 100).toFixed(1) : 0;
+  document.getElementById('finalScore').innerText = `🏆 Score : ${score}`;
+  document.getElementById('finalLevel').innerText = `📈 Niveau : ${level}`;
+  document.getElementById('finalCombo').innerText = `⚡ Combo max : ${maxCombo}`;
+  document.getElementById('finalAccuracy').innerText = `🎯 Précision : ${accuracy}%`;
+  setTimeout(()=> { gameOverScreen.style.display = 'flex'; }, 420);
+}
+
+/* ================= Input handling (mobile-friendly) ================= */
+input.addEventListener('input', (e) => {
+  const value = e.target.value;
+  if (!gameRunning || activeWords.length === 0) { e.target.value = ''; return; }
+  const letter = value.slice(-1);
+  const current = activeWords[0]; // keep linear typing as requested
+  if (current && current.typeLetter(letter)) {
+    // success for current word — nothing else needed here
+  } else {
+    // visual feedback
+    input.style.borderColor = '#f00';
+    setTimeout(()=> input.style.borderColor = '#0ff', 160);
+  }
+  e.target.value = '';
+  // keep focus (mobile)
+  input.focus();
+});
+window.addEventListener('touchend', ()=> { if (gameRunning) input.focus(); });
+
+/* ================= Audio UI ================= */
+const toggleBtn = document.getElementById('audioToggle');
+const volRange = document.getElementById('volumeRange');
+volRange.value = AudioManager.volume;
+toggleBtn.addEventListener('click', ()=> {
+  AudioManager.muted = !AudioManager.muted;
+  toggleBtn.textContent = AudioManager.muted ? '🔇' : '🔊';
+});
+volRange.addEventListener('input', (e) => {
+  const v = parseFloat(e.target.value);
+  AudioManager.setVolume(v);
+});
+
+/* ================= Buttons ================= */
+document.getElementById('startBtn').addEventListener('click', startGame);
+document.getElementById('retryBtn').addEventListener('click', ()=> { gameOverScreen.style.display='none'; startGame(); });
+document.getElementById('quitBtn').addEventListener('click', ()=> { location.reload(); });
+document.getElementById('nextLevelBtn').addEventListener('click', nextLevel);
+document.getElementById('mainMenuBtn').addEventListener('click', ()=> { location.reload(); });
+
+/* Prevent default context menu on long press */
+document.addEventListener('contextmenu', e => e.preventDefault());
+
+/* Resize observer: reposition words slightly if window resizes to avoid overflow */
+window.addEventListener('resize', ()=> {
+  activeWords.forEach(w => {
+    const maxX = Math.max(10, game.offsetWidth - (w.el.offsetWidth || 80) - 30);
+    w.x = Math.min(w.x, maxX);
+    w.el.style.left = w.x + 'px';
+  });
+});
+</script>
+</body>
+</html>
