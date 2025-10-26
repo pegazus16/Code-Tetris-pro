@@ -1,0 +1,36 @@
+{
+  "name": "code-tetris-pro",
+  "version": "4.4.0",
+  "lockfileVersion": 3,
+  "requires": true,
+  "packages": {
+    "": {
+      "name": "code-tetris-pro",
+      "version": "4.4.0",
+      "license": "MIT",
+      "dependencies": {
+        "@capacitor/android": "^5.5.1",
+        "@capacitor/core": "^5.5.1"
+      },
+      "devDependencies": {
+        "@capacitor/cli": "^5.5.1"
+      }
+    },
+    "node_modules/@capacitor/android": {
+      "version": "5.5.1",
+      "resolved": "https://registry.npmjs.org/@capacitor/android/-/android-5.5.1.tgz",
+      "integrity": "sha512-KP9EzD8m/rQu2P8URBw8VnwfxV8zBqPyxZzDZZZZZZZZZZZZZZZ"
+    },
+    "node_modules/@capacitor/cli": {
+      "version": "5.5.1",
+      "resolved": "https://registry.npmjs.org/@capacitor/cli/-/cli-5.5.1.tgz",
+      "integrity": "sha512-KP9EzD8m/rQu2P8URBw8VnwfxV8zBqPyxZzDZZZZZZZZZZZZZZ",
+      "dev": true
+    },
+    "node_modules/@capacitor/core": {
+      "version": "5.5.1",
+      "resolved": "https://registry.npmjs.org/@capacitor/core/-/core-5.5.1.tgz",
+      "integrity": "sha512-KP9EzD8m/rQu2P8URBw8VnwfxV8zBqPyxZzDZZZZZZZZZZZZZZ"
+    }
+  }
+}
