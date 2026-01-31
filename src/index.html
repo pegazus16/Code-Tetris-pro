@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+  <title>Code Tetris Pro v4.4 - Modular Edition</title>
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#00ffff">
+  <meta name="description" content="Code Tetris Pro - Jeu educatif de frappe de code">
+
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/menu.css">
+  <link rel="stylesheet" href="css/game.css">
+  <link rel="stylesheet" href="css/particles.css">
+  <link rel="stylesheet" href="css/overlays.css">
+</head>
+<body>
+
+  <div id="menu">
+    <h1>Code Tetris Pro</h1>
+    <label>Difficulty:</label>
+    <select id="difficulty">
+      <option value="beginner">Beginner</option>
+      <option value="easy">Easy</option>
+      <option value="medium" selected>Medium</option>
+      <option value="hard">Hard</option>
+      <option value="expert">Expert</option>
+    </select>
+    <label>Language:</label>
+    <select id="language">
+      <option value="cpp" selected>C++</option>
+      <option value="python">Python</option>
+      <option value="javascript">JavaScript</option>
+    </select>
+    <label>Project:</label>
+    <select id="project">
+      <option value="basic" selected>Basic Syntax</option>
+      <option value="calculator">Calculator</option>
+      <option value="fibonacci">Fibonacci</option>
+    </select>
+    <button id="startBtn">Start Game</button>
+  </div>
+
+  <div id="audioPanel">
+    <button id="audioToggle">🔊</button>
+    <input id="volumeRange" type="range" min="0" max="1" step="0.05">
+  </div>
+
+  <div id="game" class="lang-cpp">
+    <div class="particles" id="particles"></div>
+  </div>
+
+  <div id="info">
+    <div>Score: <span id="score">0</span></div>
+    <div>Lives: <span id="lives">3</span></div>
+    <div>Level: <span id="level">1</span></div>
+    <div>Combo: <span id="combo">0</span></div>
+  </div>
+  <input id="input" type="text" placeholder="Type here..." autofocus>
+
+  <div id="gameOverScreen" class="overlay" aria-hidden="true">
+    <div class="box">
+      <h2>Game Over</h2>
+      <div class="stat" id="finalScore"></div>
+      <div class="stat" id="finalLevel"></div>
+      <div class="stat" id="finalCombo"></div>
+      <div class="stat" id="finalAccuracy"></div>
+      <button class="gm-btn" id="retryBtn">Rejouer</button>
+      <button class="gm-btn" id="quitBtn">Menu</button>
+    </div>
+  </div>
+
+  <div id="victoryScreen" class="overlay" aria-hidden="true">
+    <div class="box">
+      <h2>Victoire !</h2>
+      <div class="stat" id="victoryScore"></div>
+      <div class="stat" id="victoryCombo"></div>
+      <div class="stat" id="victoryAccuracy"></div>
+      <p style="margin-top:1vh;font-size:3.8vw">Felicitations ! Prochain niveau debloque.</p>
+      <button class="gm-btn" id="nextLevelBtn">Continuer</button>
+      <button class="gm-btn" id="mainMenuBtn">Menu</button>
+    </div>
+  </div>
+
+  <div id="levelUpOverlay" class="overlay" aria-hidden="true">
+    <div class="box">
+      <h2>Level Up!</h2>
+      <p class="stat">Prepare-toi — la vitesse augmente...</p>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

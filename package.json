@@ -4,11 +4,12 @@
   "description": "Jeu éducatif de frappe de code - Version Mobile",
   "main": "index.js",
   "scripts": {
-    "build": "mkdir -p www && cp index.html www/index.html",
+    "build": "mkdir -p www && cp -r src/* www/",
     "cap:init": "npx cap add android",
     "cap:sync": "npx cap sync",
     "cap:run": "npx cap run android",
-    "build:apk": "npm run build && npm run cap:sync && cd android && ./gradlew assembleDebug"
+    "build:apk": "npm run build && npm run cap:sync && cd android && ./gradlew assembleDebug",
+    "dev": "python3 -m http.server 8080 --directory src"
   },
   "keywords": [
     "game",

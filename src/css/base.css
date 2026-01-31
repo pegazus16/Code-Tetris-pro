@@ -1,0 +1,45 @@
+* {
+  box-sizing: border-box;
+  user-select: none;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+body {
+  font-family: 'Fira Code', monospace;
+  background: linear-gradient(135deg, #0f172a, #1e293b, #0f172a);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  height: 100vh;
+  width: 100vw;
+}
+
+select,
+button {
+  font-size: 4vw;
+  padding: 1vh 2vw;
+  margin: 0.8vh;
+  border-radius: 1vw;
+  border: none;
+  background: rgba(0, 255, 255, 0.15);
+  color: #0ff;
+  cursor: pointer;
+}
+
+button:hover {
+  background: rgba(0, 255, 255, 0.25);
+}
+
+input {
+  font-family: 'Fira Code', monospace;
+}

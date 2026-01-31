@@ -1,0 +1,77 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 80;
+}
+
+.overlay .box {
+  background: rgba(12, 22, 34, 0.95);
+  border: 2px solid rgba(15, 200, 255, 0.12);
+  color: #0ff;
+  padding: 3vh 5vw;
+  border-radius: 14px;
+  text-align: center;
+  max-width: 92vw;
+  box-shadow: 0 0 30px rgba(0, 255, 255, 0.06);
+}
+
+.overlay h2 {
+  font-size: 6vw;
+  margin: 0 0 1vh;
+}
+
+.stat {
+  font-size: 4vw;
+  margin: 0.5vh 0;
+}
+
+.gm-btn {
+  font-size: 4vw;
+  padding: 1vh 3vw;
+  margin-top: 1vh;
+  border: none;
+  border-radius: 1vw;
+  background: #0ff;
+  color: #111;
+  font-weight: bold;
+}
+
+.gm-btn:hover {
+  background: #7efeff;
+}
+
+#levelUpOverlay .box {
+  background: linear-gradient(135deg, rgba(0, 200, 255, 0.12), rgba(120, 255, 200, 0.08));
+  color: #fff;
+  border-color: #00f5ff;
+  transform: scale(0.95);
+  animation: popIn 0.45s ease-out forwards;
+}
+
+@keyframes popIn {
+  0% {
+    transform: scale(0.85);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@media (min-width: 900px) {
+  #menu h1 {
+    font-size: 40px;
+  }
+  .overlay h2 {
+    font-size: 32px;
+  }
+  .stat {
+    font-size: 18px;
+  }
+}
